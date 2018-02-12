@@ -1,7 +1,7 @@
 FIFA Ultimate Team Toolkit
 ===============================
 
-[![Join the chat at https://gitter.im/trydis/FIFA-Ultimate-Team-Toolkit](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/trydis/FIFA-Ultimate-Team-Toolkit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![NuGet package](https://img.shields.io/nuget/vpre/UltimateTeam.Toolkit.svg)](https://www.nuget.org/packages/UltimateTeam.Toolkit/) [![Build status](https://ci.appveyor.com/api/projects/status/4owj0a485hhx1j7c/branch/master?svg=true)](https://ci.appveyor.com/project/trydis/fifa-ultimate-team-toolkit/branch/master) [![Join the chat at https://gitter.im/trydis/FIFA-Ultimate-Team-Toolkit](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/trydis/FIFA-Ultimate-Team-Toolkit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Supported platforms
 - .NET 4.5
@@ -9,13 +9,8 @@ FIFA Ultimate Team Toolkit
 - Windows Phone 8.1
 - Xamarin.Android
 - Xamarin.iOS
-
-## Build status
-[![Build status](https://ci.appveyor.com/api/projects/status/4owj0a485hhx1j7c/branch/master?svg=true)](https://ci.appveyor.com/project/trydis/fifa-ultimate-team-toolkit/branch/master)
-
-## NuGet package
-
-[Install-Package UltimateTeam.Toolkit](https://www.nuget.org/packages/UltimateTeam.Toolkit/)
+- Xamarin.Mac
+- ASP.NET Core 1.0
 
 ## Sample usage
 
@@ -31,11 +26,14 @@ FIFA Ultimate Team Toolkit
 [Credits](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#credits)  
 [List auction](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#list-auction)  
 [Get trade pile](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-trade-pile)  
-[Watch list](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#watch-list)  
-[Purchased items](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#purchased-items)  
+[Get watch list](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-watch-list)  
+[Get Consumables](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-consumables)  
+[Add auction to watch list](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#add-auction-to-watch-list)  
+[Get Purchased items](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-purchased-items)  
 [Development search](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#development-search)  
 [Training search](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#training-search)  
 [Send to trade pile](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#send-to-trade-pile)  
+[Send to club](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#send-to-club)    
 [Quick sell](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#quick-sell)  
 [Remove from watch list](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#remove-from-watch-list)  
 [Remove from trade pile](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#remove-from-trade-pile)  
@@ -44,9 +42,8 @@ FIFA Ultimate Team Toolkit
 [Get players from club](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-players-from-club)  
 [Get squads from club](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-squads-from-club)  
 [Get squad details](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-squad-details)  
-[Get definitions](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-definitions)  
-[Get price ranges](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-price-ranges)  
-[Get & Solve Captcha](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-solve-captcha)  
+[Get definitions](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-definitions)    
+[Get daily gift](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#get-daily-gift)  
 [Remove sold items from trade pile](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#remove-sold-items-from-trade-pile)  
 [Open a pack](https://github.com/trydis/FIFA-Ultimate-Team-Toolkit#open-a-pack)  
 
@@ -62,6 +59,25 @@ var client = new FutClient();
 var loginDetails = new LoginDetails("e-mail", "password", "secret answer", Platform.Ps4 /* or any of the other platforms */, AppVersion.WebApp /* or AppVersion.CompanionApp */);
 ITwoFactorCodeProvider provider = // initialize an implementation of this interface
 var loginResponse = await client.LoginAsync(loginDetails, provider);
+```
+
+Example implementation of ITwoFactorCodeProvider interface
+```csharp
+
+    ...
+	ITwoFactorCodeProvider provider = new FutAuth();
+    ...
+	
+    public class FutAuth : ITwoFactorCodeProvider
+    {
+        public TaskCompletionSource<string> taskResult = new TaskCompletionSource<string>();
+        public Task<string> GetTwoFactorCodeAsync(AuthenticationType authType)
+        {
+            Console.WriteLine($"{ DateTime.Now } Enter OTP ({ authType }):");
+            taskResult.SetResult(Console.ReadLine());
+            return taskResult.Task;
+        }
+    }
 ```
 
 ### Player search
@@ -184,7 +200,7 @@ Gets the items in the trade pile.
 var tradePileResponse = await client.GetTradePileAsync();
 ```
 
-### Watch list
+### Get watch list
 
 Retrieves the the watch list.
 
@@ -192,7 +208,22 @@ Retrieves the the watch list.
 var watchlistResponse = await client.GetWatchlistAsync();
 ```
 
-### Purchased items
+### Get Consumables
+
+Retrieves the consumables of your club
+
+```csharp
+var consumablesResponse = await client.GetConsumablesAsync();
+```
+
+### Add auction to watch list
+
+
+```csharp
+var addAuctionToWatchlistResponse = await client.AddToWatchlistRequestAsync(auctionInfo);
+```
+
+### Get purchased items
 
 Items that have been bought or received in gift packs.
 
@@ -246,6 +277,14 @@ Sends an item to the trade pile (transfer market)
 var sendToTradePileResponse = await client.SendItemToTradePileAsync(itemData);
 ```
 
+### Send to club
+
+Sends an item to your club
+
+```csharp
+var sendToClubResponse = await client.SendItemToClubAsync(itemData);
+```
+
 ### Quick sell
 
 Quick sell an item at discard value.
@@ -280,7 +319,7 @@ var pileSizeResponse = await client.GetPileSizeAsync();
 
 ### Relist Tradepile
 
-Re-listing all tradepile items listed before.
+Relists all tradepile items as listed before.
 
 ```csharp
 await client.ReListAsync();
@@ -331,34 +370,30 @@ var playerDefinitions = await client.GetDefinitionsAsync(/* AssetId */);
 
 foreach (ItemData itemData in playerDefinitions.ItemData)
 {
-    var definitionId = itemData.ResourceId;
-    // Contains the Definition ID for i.e. a TOTW card, which you can use to search for this specific card
+	// Contains the Definition ID for i.e. a TOTW card, which you can use to search for this specific card
+	var definitionId = itemData.ResourceId;
 }
 ```
 
-### Get price ranges
+### Get daily gift
 
-Gets the EA price range - **You can only use this method right after you get tradepile / watchlist!**
+Gets the daily gift from the WebApp if available - This feature is currently not implemented for the Companion App.
 ```csharp
-var priceRanges = await client.GetPriceRangesAsync(/* List of ItemIds */);
 
-foreach (PriceRange priceRange in priceRanges)
+var giftsListResponse = await futClient.GetGiftsListAsync();
+foreach (var activeMessages in giftsListResponse.ActiveMessage)
 {
-    priceRange.MaxPrice = // Maximum BIN
-    priceRange.MinPrice = // Minimum Starting BID
+	await GetGiftAsync(/* GiftId */);
 }
-```
 
-### Get & Solve Captcha
-
-Get Captcha as Base64 encoded image
-```csharp
-CaptchaResponse captchaImg = await futClient.GetCaptchaAsync();
-```
-
-Solve Captcha
-```csharp
-var CaptchaValidate = await futClient.ValidateCaptchaAsync(/* answer */);
+var purchasedItemsResponse = await client.GetPurchasedItemsAsync();
+if (purchasedItemsResponse.ItemData.Count > 0)
+{
+	foreach (ItemData item in purchasedItemsResponse.ItemData)
+	{
+		await client.SendItemToClubAsync(item);
+	}
+}
 ```
 
 ### Remove sold items from trade pile
